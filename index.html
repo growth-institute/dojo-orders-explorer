@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ordenes DOJO — Explorador</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0F172A;
+      --bg-card: #1E293B;
+      --bg-card-hover: #253348;
+      --border: #334155;
+      --text: #F1F5F9;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+      --accent: #818CF8;
+      --accent-bg: rgba(129,140,248,0.1);
+      --green: #34D399;
+      --green-bg: rgba(52,211,153,0.12);
+      --red: #F87171;
+      --red-bg: rgba(248,113,113,0.12);
+      --yellow: #FBBF24;
+      --yellow-bg: rgba(251,191,36,0.12);
+      --cyan: #22D3EE;
+      --cyan-bg: rgba(34,211,238,0.12);
+      --orange: #FB923C;
+      --orange-bg: rgba(251,146,60,0.12);
+      --radius: 0.75rem;
+      --shadow: 0 4px 24px rgba(0,0,0,0.3);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+
+    .topbar { background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border-bottom: 1px solid var(--border); padding: 1rem 0; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(12px); }
+    .topbar h1 { font-size: 1.125rem; font-weight: 700; letter-spacing: -0.02em; }
+    .topbar h1 span { color: var(--accent); }
+    .topbar .badge-ro { font-size: 0.625rem; background: var(--accent-bg); color: var(--accent); border: 1px solid rgba(129,140,248,0.3); padding: 0.2em 0.6em; border-radius: 2rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-left: 0.75rem; vertical-align: middle; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(195px, 1fr)); gap: 0.75rem; margin: 1.25rem 0; }
+    .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden; }
+    .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; opacity: 0; transition: opacity 0.2s; }
+    .stat-card:hover { border-color: var(--text-dim); transform: translateY(-2px); box-shadow: var(--shadow); }
+    .stat-card:hover::before { opacity: 1; }
+    .stat-card.active { border-color: var(--accent); }
+    .stat-card.active::before { opacity: 1; }
+    .stat-card .sc-num { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+    .stat-card .sc-label { font-size: 0.6875rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.25rem; }
+    .stat-card .sc-desc { font-size: 0.625rem; color: var(--text-dim); margin-top: 0.2rem; line-height: 1.3; }
+    .sc-total .sc-num { color: var(--text); }
+    .sc-total::before { background: var(--accent); }
+    .sc-active .sc-num { color: var(--yellow); }
+    .sc-active::before { background: var(--yellow); }
+    .sc-matched .sc-num { color: var(--green); }
+    .sc-matched::before { background: var(--green); }
+    .sc-pending .sc-num { color: var(--red); }
+    .sc-pending::before { background: var(--red); }
+    .sc-noref .sc-num { color: var(--text-dim); }
+    .sc-noref::before { background: var(--text-dim); }
+    .sc-nocust .sc-num { color: var(--orange); }
+    .sc-nocust::before { background: var(--orange); }
+    .sc-nopay .sc-num { color: var(--red); }
+    .sc-nopay::before { background: var(--red); }
+    .sc-needsmatch .sc-num { color: var(--cyan); }
+    .sc-needsmatch::before { background: var(--cyan); }
+
+    .filters-bar { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.875rem 1.25rem; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.625rem; align-items: center; }
+    .f-input { background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.8125rem; font-family: inherit; transition: border-color 0.2s; outline: none; }
+    .f-input:focus { border-color: var(--accent); }
+    .f-input::placeholder { color: var(--text-dim); }
+    .f-select { appearance: none; background: var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394A3B8' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E") no-repeat right 0.6rem center; padding-right: 2rem; }
+    .f-divider { width: 1px; height: 1.5rem; background: var(--border); }
+    .btn-clear { background: none; border: 1px solid var(--border); color: var(--text-muted); border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-clear:hover { border-color: var(--red); color: var(--red); }
+
+    .data-table-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+    .info-row { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border); }
+    .info-row .count { font-size: 0.8125rem; color: var(--text-muted); }
+    .info-row .count strong { color: var(--text); font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+    thead th { background: rgba(15,23,42,0.5); color: var(--text-muted); font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); white-space: nowrap; position: sticky; top: 0; cursor: pointer; user-select: none; transition: color 0.15s; }
+    thead th:hover { color: var(--accent); }
+    thead th.sorted { color: var(--accent); }
+    tbody td { padding: 0.6rem 1rem; border-bottom: 1px solid rgba(51,65,85,0.5); vertical-align: middle; white-space: nowrap; }
+    tbody tr { transition: background 0.15s; }
+    tbody tr:hover { background: var(--bg-card-hover); }
+    tbody tr.row-matched { background: rgba(52,211,153,0.04); }
+    tbody tr.row-matched:hover { background: rgba(52,211,153,0.08); }
+
+    .pill { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.6875rem; font-weight: 600; padding: 0.2em 0.55em; border-radius: 0.375rem; white-space: nowrap; }
+    .pill-green { background: var(--green-bg); color: var(--green); }
+    .pill-red { background: var(--red-bg); color: var(--red); }
+    .pill-yellow { background: var(--yellow-bg); color: var(--yellow); }
+    .pill-cyan { background: var(--cyan-bg); color: var(--cyan); }
+    .pill-orange { background: var(--orange-bg); color: var(--orange); }
+    .pill-dim { background: rgba(100,116,139,0.15); color: var(--text-dim); }
+    .pill-accent { background: var(--accent-bg); color: var(--accent); }
+
+    .mono { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+    .truncate { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle; }
+
+    .pag { display: flex; justify-content: center; align-items: center; gap: 0.375rem; padding: 1rem; }
+    .pag button { background: var(--bg); border: 1px solid var(--border); color: var(--text-muted); border-radius: 0.5rem; padding: 0.4rem 0.75rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+    .pag button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .pag button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .pag button:disabled { opacity: 0.3; cursor: default; }
+    .pag .pag-info { font-size: 0.75rem; color: var(--text-dim); margin: 0 0.5rem; }
+
+    .detail-modal .modal-content { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); }
+    .detail-modal .modal-header { border-bottom: 1px solid var(--border); padding: 1.25rem 1.5rem; }
+    .detail-modal .modal-header .modal-title { font-weight: 700; font-size: 1rem; }
+    .detail-modal .modal-header .btn-close { filter: invert(1); }
+    .detail-modal .modal-body { padding: 1.5rem; max-height: 70vh; overflow-y: auto; }
+    .dl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 2rem; }
+    .dl-item .dl-label { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 0.15rem; }
+    .dl-item .dl-value { font-size: 0.875rem; word-break: break-all; line-height: 1.5; }
+    .dl-full { grid-column: 1 / -1; }
+    .json-block { background: var(--bg); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.75rem; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; max-height: 200px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; color: var(--text-muted); }
+
+    .skeleton { background: linear-gradient(90deg, var(--border) 25%, var(--bg-card-hover) 50%, var(--border) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 0.25rem; height: 1rem; display: inline-block; }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+    .empty-state { text-align: center; padding: 4rem 1rem; color: var(--text-dim); }
+    .empty-state i { font-size: 2.5rem; margin-bottom: 0.75rem; display: block; opacity: 0.4; }
+
+    @media (max-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .filters-bar { flex-direction: column; }
+      .dl-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="container-fluid" style="max-width:1700px">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1><span>DOJO</span> Ordenes &mdash; Explorador <span class="badge-ro">Solo Lectura</span></h1>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:0.75rem;color:var(--text-muted)">
+            <span v-if="stats.total_records != null">{{ stats.total_records?.toLocaleString('es-MX') }} ordenes en base de datos</span>
+            <span v-else class="skeleton" style="width:120px">&nbsp;</span>
+          </div>
+          <div style="font-size:0.625rem;color:var(--text-dim);margin-top:0.15rem">
+            Fuente: DOJO ETL API &rarr; Xano
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-fluid py-3" style="max-width:1700px">
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card sc-total" :class="{ active: !activeFilter }" @click="setFilter(null)">
+        <div class="sc-num">{{ fmt(stats.total_records) }}</div>
+        <div class="sc-label">Total Ordenes</div>
+        <div class="sc-desc">Todas las ordenes importadas de DOJO</div>
+      </div>
+      <div class="stat-card sc-active" :class="{ active: activeFilter === 'active' }" @click="setFilter('active')">
+        <div class="sc-num">{{ fmt(stats.total_active) }}</div>
+        <div class="sc-label">Ordenes Activas</div>
+        <div class="sc-desc">Con status "active" en DOJO</div>
+      </div>
+      <div class="stat-card sc-matched" :class="{ active: activeFilter === 'matched' }" @click="setFilter('matched')">
+        <div class="sc-num">{{ fmt(stats.matched) }}</div>
+        <div class="sc-label">Conciliadas</div>
+        <div class="sc-desc">Vinculadas a un cliente en nuestro sistema</div>
+      </div>
+      <div class="stat-card sc-pending" @click="setFilter(null)">
+        <div class="sc-num">{{ unclassifiedCount }}</div>
+        <div class="sc-label">Pendientes de Clasificar</div>
+        <div class="sc-desc">Aun no procesadas por el pipeline</div>
+      </div>
+      <div class="stat-card sc-noref" :class="{ active: activeFilter === 'recon_no_ref_id' }" @click="setFilter('recon_no_ref_id')">
+        <div class="sc-num">{{ fmt(categoryCounts.no_ref_id) }}</div>
+        <div class="sc-label">Sin Referencia de Pago</div>
+        <div class="sc-desc">Sin ticket de Stripe/Hotmart para buscar</div>
+      </div>
+      <div class="stat-card sc-nocust" :class="{ active: activeFilter === 'recon_needs_reconciliation' }" @click="setFilter('recon_needs_reconciliation')">
+        <div class="sc-num">{{ fmt(categoryCounts.needs_reconciliation) }}</div>
+        <div class="sc-label">Cliente No Encontrado</div>
+        <div class="sc-desc">El email no existe en nuestra BD de clientes</div>
+      </div>
+      <div class="stat-card sc-nopay" :class="{ active: activeFilter === 'recon_no_payment_found' }" @click="setFilter('recon_no_payment_found')">
+        <div class="sc-num">{{ fmt(categoryCounts.no_payment_found) }}</div>
+        <div class="sc-label">Pago No Encontrado</div>
+        <div class="sc-desc">Tiene referencia de Stripe pero no se encontro</div>
+      </div>
+      <div class="stat-card sc-needsmatch" :class="{ active: activeFilter === 'recon_needs_payment_match' }" @click="setFilter('recon_needs_payment_match')">
+        <div class="sc-num">{{ fmt(categoryCounts.needs_payment_match) }}</div>
+        <div class="sc-label">Pendiente de Vincular Pago</div>
+        <div class="sc-desc">Cliente encontrado, pago pendiente de match</div>
+      </div>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="filters-bar">
+      <div style="flex:1;min-width:200px;position:relative">
+        <i class="bi bi-search" style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:var(--text-dim);font-size:0.8rem;pointer-events:none"></i>
+        <input class="f-input" style="width:100%;padding-left:2.25rem" type="text" placeholder="Buscar por email o # de orden..." v-model="search" @input="onSearch">
+      </div>
+      <div class="f-divider"></div>
+      <div>
+        <select class="f-input f-select" v-model="filters.order_status" @change="fetchData(1)">
+          <option value="">Status: Todos</option>
+          <option value="active">Activo</option>
+          <option value="completed">Completado</option>
+          <option value="cancelled">Cancelado</option>
+        </select>
+      </div>
+      <div>
+        <select class="f-input f-select" v-model="filters.matched" @change="fetchData(1)">
+          <option value="">Conciliacion: Todos</option>
+          <option value="true">Solo Conciliados</option>
+        </select>
+      </div>
+      <div>
+        <select class="f-input f-select" v-model="filters.reconciliation_status" @change="fetchData(1)">
+          <option value="">Clasificacion: Todos</option>
+          <option value="matched">Conciliado</option>
+          <option value="needs_reconciliation">Cliente no encontrado</option>
+          <option value="no_ref_id">Sin referencia de pago</option>
+          <option value="no_payment_found">Pago no encontrado</option>
+          <option value="needs_payment_match">Pendiente de vincular</option>
+        </select>
+      </div>
+      <div class="f-divider"></div>
+      <div>
+        <input class="f-input" type="date" v-model="filters.date_from" @change="fetchData(1)" style="width:140px" title="Fecha desde">
+      </div>
+      <div>
+        <input class="f-input" type="date" v-model="filters.date_to" @change="fetchData(1)" style="width:140px" title="Fecha hasta">
+      </div>
+      <div class="f-divider"></div>
+      <div>
+        <input class="f-input" type="number" v-model="filters.min_amount" @change="fetchData(1)" placeholder="Min $" style="width:90px" step="0.01">
+      </div>
+      <div>
+        <input class="f-input" type="number" v-model="filters.max_amount" @change="fetchData(1)" placeholder="Max $" style="width:90px" step="0.01">
+      </div>
+      <div class="f-divider"></div>
+      <div>
+        <input class="f-input" type="text" v-model="filters.email_domain" @change="fetchData(1)" placeholder="Dominio email..." style="width:130px">
+      </div>
+      <button class="btn-clear" @click="clearAll" title="Limpiar filtros"><i class="bi bi-x-lg"></i> Limpiar</button>
+    </div>
+
+    <!-- Data Table -->
+    <div class="data-table-wrap">
+      <div class="info-row">
+        <div class="count">
+          <strong>{{ paging.itemsTotal?.toLocaleString('es-MX') || 0 }}</strong> resultados
+          <span v-if="activeFilter" style="margin-left:0.5rem">
+            &mdash; Filtro: <span class="pill pill-accent">{{ activeFilterLabel }}</span>
+            <button @click="setFilter(null)" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:0.75rem;margin-left:0.25rem"><i class="bi bi-x-circle"></i></button>
+          </span>
+        </div>
+        <div class="count">Pagina <strong>{{ paging.curPage }}</strong> de {{ paging.pageTotal?.toLocaleString('es-MX') }}</div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th @click="toggleSort('dojo_order_id')" :class="{ sorted: sortField === 'dojo_order_id' }"># Orden <i :class="sortIcon('dojo_order_id')"></i></th>
+              <th @click="toggleSort('_product')" :class="{ sorted: sortField === '_product' }">Producto <i :class="sortIcon('_product')"></i></th>
+              <th @click="toggleSort('dojo_user_email')" :class="{ sorted: sortField === 'dojo_user_email' }">Email Cliente <i :class="sortIcon('dojo_user_email')"></i></th>
+              <th @click="toggleSort('dojo_order_total')" :class="{ sorted: sortField === 'dojo_order_total' }">Monto <i :class="sortIcon('dojo_order_total')"></i></th>
+              <th @click="toggleSort('dojo_order_date')" :class="{ sorted: sortField === 'dojo_order_date' }">Fecha <i :class="sortIcon('dojo_order_date')"></i></th>
+              <th @click="toggleSort('order_status')" :class="{ sorted: sortField === 'order_status' }">Status <i :class="sortIcon('order_status')"></i></th>
+              <th @click="toggleSort('reconciliation_status')" :class="{ sorted: sortField === 'reconciliation_status' }">Conciliacion <i :class="sortIcon('reconciliation_status')"></i></th>
+              <th @click="toggleSort('ref_type')" :class="{ sorted: sortField === 'ref_type' }">Procesador <i :class="sortIcon('ref_type')"></i></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody v-if="isLoading">
+            <tr v-for="i in 20" :key="i">
+              <td><span class="skeleton" style="width:50px">&nbsp;</span></td>
+              <td><span class="skeleton" style="width:180px">&nbsp;</span></td>
+              <td><span class="skeleton" style="width:150px">&nbsp;</span></td>
+              <td><span class="skeleton" style="width:70px">&nbsp;</span></td>
+              <td><span class="skeleton" style="width:80px">&nbsp;</span></td>
+              <td><span class="skeleton" style="width:55px">&nbsp;</span></td>
+              <td><span class="skeleton" style="width:90px">&nbsp;</span></td>
+              <td><span class="skeleton" style="width:60px">&nbsp;</span></td>
+              <td></td>
+            </tr>
+          </tbody>
+          <tbody v-else-if="items.length === 0">
+            <tr>
+              <td colspan="9">
+                <div class="empty-state"><i class="bi bi-inbox"></i><div>Sin resultados para estos filtros</div></div>
+              </td>
+            </tr>
+          </tbody>
+          <tbody v-else>
+            <tr v-for="row in items" :key="row.id" :class="{ 'row-matched': row.matched }">
+              <td class="mono">
+                <a v-if="row.dojo_order_link" :href="row.dojo_order_link" target="_blank" style="color:var(--accent);text-decoration:none">{{ row.dojo_order_id }} <i class="bi bi-box-arrow-up-right" style="font-size:0.55rem"></i></a>
+                <span v-else>{{ row.dojo_order_id }}</span>
+              </td>
+              <td>
+                <span v-if="getProducts(row.dojo_order_items, row.dojo_order_description)" style="color:var(--text);font-weight:500;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block" :title="getProducts(row.dojo_order_items, row.dojo_order_description)">
+                  {{ getProducts(row.dojo_order_items, row.dojo_order_description) }}
+                </span>
+                <span v-else style="color:var(--text-dim)">—</span>
+              </td>
+              <td>
+                <div style="line-height:1.3">
+                  <span class="truncate" style="color:var(--text-muted);max-width:200px" :title="row.dojo_user_email">{{ row.dojo_user_email || '—' }}</span>
+                  <div v-if="row.email_domain" style="font-size:0.6rem;color:var(--text-dim)">{{ row.email_domain }}</div>
+                </div>
+              </td>
+              <td style="font-weight:600;font-variant-numeric:tabular-nums">
+                <span :style="{ color: parseFloat(row.dojo_order_total) > 0 ? 'var(--green)' : 'var(--text-dim)' }">
+                  {{ formatMoney(row.dojo_order_total, row.dojo_order_currency) }}
+                </span>
+              </td>
+              <td style="color:var(--text-muted)">{{ formatDate(row.dojo_order_date) }}</td>
+              <td>
+                <span class="pill" :class="statusPill(row.order_status)">{{ statusLabel(row.order_status) }}</span>
+              </td>
+              <td>
+                <span v-if="row.matched" class="pill pill-green"><i class="bi bi-check-circle-fill"></i> Conciliado</span>
+                <span v-else class="pill" :class="reconPill(row.reconciliation_status)">{{ reconLabel(row.reconciliation_status) }}</span>
+              </td>
+              <td>
+                <span v-if="row.ref_type && row.ref_type !== 'none'" class="pill" :class="refTypePill(row.ref_type)">{{ refTypeLabel(row.ref_type) }}</span>
+                <span v-else style="color:var(--text-dim);font-size:0.75rem">—</span>
+              </td>
+              <td>
+                <button class="btn-clear" style="padding:0.3rem 0.5rem;font-size:0.7rem" @click="openDetail(row)" title="Ver todos los detalles"><i class="bi bi-eye"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pag" v-if="paging.pageTotal > 1">
+        <button :disabled="!paging.prevPage" @click="fetchData(1)"><i class="bi bi-chevron-double-left"></i></button>
+        <button :disabled="!paging.prevPage" @click="fetchData(paging.prevPage)"><i class="bi bi-chevron-left"></i></button>
+        <button v-for="p in visiblePages" :key="p" :class="{ active: p === paging.curPage }" @click="fetchData(p)">{{ p }}</button>
+        <span class="pag-info">de {{ paging.pageTotal?.toLocaleString('es-MX') }}</span>
+        <button :disabled="!paging.nextPage" @click="fetchData(paging.nextPage)"><i class="bi bi-chevron-right"></i></button>
+        <button :disabled="!paging.nextPage" @click="fetchData(paging.pageTotal)"><i class="bi bi-chevron-double-right"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="modal fade detail-modal" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content" v-if="detail">
+        <div class="modal-header">
+          <h5 class="modal-title">Orden DOJO #{{ detail.dojo_order_id }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="dl-grid">
+            <div class="dl-item">
+              <div class="dl-label"># Orden</div>
+              <div class="dl-value mono">{{ detail.dojo_order_id }}</div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">ID Usuario DOJO</div>
+              <div class="dl-value mono">{{ detail.dojo_user_id }}</div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">Email del Cliente</div>
+              <div class="dl-value">{{ detail.dojo_user_email || '—' }}</div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">Email de Login</div>
+              <div class="dl-value">{{ detail.dojo_login_email || '—' }}</div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">Fecha de Orden</div>
+              <div class="dl-value">{{ formatDateFull(detail.dojo_order_date) }}</div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">Ultima Modificacion</div>
+              <div class="dl-value">{{ formatDateFull(detail.dojo_order_modified) }}</div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">Monto Total</div>
+              <div class="dl-value" style="font-weight:700;font-size:1.125rem">{{ formatMoney(detail.dojo_order_total, detail.dojo_order_currency) }}</div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">Moneda</div>
+              <div class="dl-value">{{ detail.dojo_order_currency || '—' }}</div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">Status de la Orden</div>
+              <div class="dl-value"><span class="pill" :class="statusPill(detail.order_status)">{{ statusLabel(detail.order_status) }}</span></div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">Procesador de Pago</div>
+              <div class="dl-value">{{ detail.payment_processor || 'Ninguno' }}</div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">Tipo de Referencia</div>
+              <div class="dl-value"><span class="pill" :class="refTypePill(detail.ref_type)">{{ refTypeLabel(detail.ref_type) }}</span></div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">ID de Referencia</div>
+              <div class="dl-value mono">{{ detail.ref_id || 'Sin referencia' }}</div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">Conciliacion</div>
+              <div class="dl-value">
+                <span v-if="detail.matched" class="pill pill-green"><i class="bi bi-check-circle-fill"></i> Conciliado</span>
+                <span v-else class="pill" :class="reconPill(detail.reconciliation_status)">{{ reconLabel(detail.reconciliation_status) }}</span>
+              </div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">ID Cliente en Nuestro Sistema</div>
+              <div class="dl-value mono">{{ detail.customer_id || 'No vinculado' }}</div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">ID de Pago Vinculado</div>
+              <div class="dl-value mono">{{ detail.payment_id || 'No vinculado' }}</div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">ID Suscripcion Vinculada</div>
+              <div class="dl-value mono">{{ detail.subscription_id || 'No vinculado' }}</div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">Ticket de Pago (raw)</div>
+              <div class="dl-value mono" style="word-break:break-all;font-size:0.7rem">{{ detail.payment_ticket || '—' }}</div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">Descripcion de Orden</div>
+              <div class="dl-value">{{ detail.dojo_order_description || '—' }}</div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">Tipo de Orden</div>
+              <div class="dl-value">{{ detail.dojo_order_type || '—' }}</div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">Orden Grupal</div>
+              <div class="dl-value">{{ detail.dojo_group_order ? 'Si' : 'No' }}</div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">Asientos</div>
+              <div class="dl-value">{{ detail.dojo_seats ?? '—' }}</div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">Dominio de Email</div>
+              <div class="dl-value mono">{{ detail.email_domain || '—' }}</div>
+            </div>
+            <div class="dl-item">
+              <div class="dl-label">Sandbox</div>
+              <div class="dl-value">{{ detail.dojo_sandbox ? 'Si (prueba)' : 'No (produccion)' }}</div>
+            </div>
+            <div class="dl-item" v-if="detail.dojo_order_link">
+              <div class="dl-label">Ver en DOJO</div>
+              <div class="dl-value"><a :href="detail.dojo_order_link" target="_blank" style="color:var(--accent)">Abrir orden en backend DOJO <i class="bi bi-box-arrow-up-right"></i></a></div>
+            </div>
+            <div class="dl-item dl-full" v-if="(detail.dojo_order_items && detail.dojo_order_items.length) || detail.dojo_order_description">
+              <div class="dl-label">Productos de la Orden</div>
+              <div class="dl-value">
+                <template v-if="detail.dojo_order_items && detail.dojo_order_items.length">
+                  <div v-for="(item, idx) in detail.dojo_order_items" :key="idx" style="margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem">
+                    <span class="pill pill-accent"><i class="bi bi-box-seam"></i> {{ (item.product && item.product.title) || item.product_name || item.title || item.sku || 'Sin nombre' }}</span>
+                    <span v-if="item.quantity > 1" style="color:var(--text-muted);font-size:0.75rem">x{{ item.quantity }}</span>
+                    <span v-if="item.price" style="color:var(--green);font-size:0.75rem;font-weight:600">${{ parseFloat(item.price).toFixed(2) }}</span>
+                  </div>
+                </template>
+                <span v-else style="color:var(--text-muted)">{{ detail.dojo_order_description }}</span>
+              </div>
+            </div>
+            <div class="dl-item dl-full" v-if="detail.manual_conciliation">
+              <div class="dl-label">Datos de Conciliacion Manual</div>
+              <div class="json-block">{{ JSON.stringify(detail.manual_conciliation, null, 2) }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script>
+const API_BASE = 'https://xex8-5ewh-8sax.n7e.xano.io/api:TmVaLmQv';
+
+const { createApp, ref, reactive, computed, onMounted, nextTick } = Vue;
+
+createApp({
+  setup() {
+    const items = ref([]);
+    const isLoading = ref(false);
+    const search = ref('');
+    const detail = ref(null);
+    const activeFilter = ref(null);
+    const sortField = ref(null);
+    const sortDir = ref('asc');
+    let searchTimer = null;
+    let modalInstance = null;
+
+    const paging = reactive({ itemsTotal: 0, pageTotal: 1, curPage: 1, nextPage: null, prevPage: null });
+    const filters = reactive({ order_status: '', matched: '', reconciliation_status: '', date_from: '', date_to: '', min_amount: '', max_amount: '', email_domain: '', exclude_domain: '' });
+    const stats = reactive({ total_records: null, total_active: null, matched: null });
+    const categoryCounts = reactive({ needs_reconciliation: null, needs_payment_match: null, no_ref_id: null, no_payment_found: null });
+
+    function fmt(val) {
+      return val != null ? val.toLocaleString('es-MX') : '—';
+    }
+
+    const unclassifiedCount = computed(() => {
+      const t = stats.total_records;
+      if (t == null) return '—';
+      const sum = (categoryCounts.needs_reconciliation || 0) + (categoryCounts.needs_payment_match || 0) +
+        (categoryCounts.no_ref_id || 0) + (categoryCounts.no_payment_found || 0) + (stats.matched || 0);
+      const val = t - sum;
+      return val >= 0 ? val.toLocaleString('es-MX') : '—';
+    });
+
+    const visiblePages = computed(() => {
+      const total = paging.pageTotal || 1;
+      const cur = paging.curPage;
+      let start = Math.max(1, cur - 3);
+      let end = Math.min(total, cur + 3);
+      if (cur <= 4) end = Math.min(total, 7);
+      if (cur >= total - 3) start = Math.max(1, total - 6);
+      const pages = [];
+      for (let i = start; i <= end; i++) pages.push(i);
+      return pages;
+    });
+
+    const activeFilterLabel = computed(() => {
+      const labels = {
+        active: 'Ordenes Activas',
+        matched: 'Conciliadas',
+        recon_no_ref_id: 'Sin Referencia de Pago',
+        recon_needs_reconciliation: 'Cliente No Encontrado',
+        recon_no_payment_found: 'Pago No Encontrado',
+        recon_needs_payment_match: 'Pendiente de Vincular',
+      };
+      return labels[activeFilter.value] || activeFilter.value;
+    });
+
+    async function fetchData(page = 1) {
+      isLoading.value = true;
+      try {
+        const params = new URLSearchParams({ page: page.toString(), per_page: '20' });
+        const s = search.value.trim();
+        if (s) params.set('search', s);
+        if (filters.order_status) params.set('order_status', filters.order_status);
+        if (filters.matched) params.set('matched', filters.matched);
+        if (filters.reconciliation_status) params.set('reconciliation_status', filters.reconciliation_status);
+        if (filters.date_from) params.set('date_from', filters.date_from);
+        if (filters.date_to) params.set('date_to', filters.date_to);
+        if (filters.min_amount) params.set('min_amount', filters.min_amount);
+        if (filters.max_amount) params.set('max_amount', filters.max_amount);
+        if (filters.email_domain) params.set('email_domain', filters.email_domain);
+        if (filters.exclude_domain) params.set('exclude_domain', filters.exclude_domain);
+        const resp = await fetch(API_BASE + '/dojo/unmatched-payments?' + params.toString());
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const data = await resp.json();
+        if (Array.isArray(data)) {
+          items.value = data;
+          paging.itemsTotal = data.length;
+          paging.pageTotal = 1;
+          paging.curPage = 1;
+          paging.nextPage = null;
+          paging.prevPage = null;
+        } else {
+          items.value = data.items || [];
+          paging.itemsTotal = data.itemsTotal ?? 0;
+          paging.pageTotal = data.pageTotal ?? 1;
+          paging.curPage = data.curPage ?? page;
+          paging.nextPage = data.nextPage ?? null;
+          paging.prevPage = data.prevPage ?? null;
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+        items.value = [];
+      } finally {
+        isLoading.value = false;
+      }
+    }
+
+    async function fetchCount(extraParams = {}) {
+      const params = new URLSearchParams({ page: '1', per_page: '1' });
+      for (const [k, v] of Object.entries(extraParams)) {
+        if (v !== undefined && v !== null && v !== '') params.set(k, v);
+      }
+      const resp = await fetch(API_BASE + '/dojo/unmatched-payments?' + params.toString());
+      if (!resp.ok) return 0;
+      const data = await resp.json();
+      return data.itemsTotal ?? (Array.isArray(data) ? data.length : 0);
+    }
+
+    async function fetchAllStats() {
+      try {
+        const [total, active, matched, needsRecon, needsPayment, noRefId, noPayFound] = await Promise.all([
+          fetchCount({}),
+          fetchCount({ order_status: 'active' }),
+          fetchCount({ matched: 'true' }),
+          fetchCount({ reconciliation_status: 'needs_reconciliation' }),
+          fetchCount({ reconciliation_status: 'needs_payment_match' }),
+          fetchCount({ reconciliation_status: 'no_ref_id' }),
+          fetchCount({ reconciliation_status: 'no_payment_found' }),
+        ]);
+        stats.total_records = total;
+        stats.total_active = active;
+        stats.matched = matched;
+        categoryCounts.needs_reconciliation = needsRecon;
+        categoryCounts.needs_payment_match = needsPayment;
+        categoryCounts.no_ref_id = noRefId;
+        categoryCounts.no_payment_found = noPayFound;
+      } catch (e) { console.error('Stats error:', e); }
+    }
+
+    function setFilter(f) {
+      activeFilter.value = f;
+      filters.order_status = '';
+      filters.matched = '';
+      filters.reconciliation_status = '';
+      filters.exclude_domain = '';
+      filters.date_from = '';
+      filters.date_to = '';
+      filters.min_amount = '';
+      filters.max_amount = '';
+      filters.email_domain = '';
+      search.value = '';
+
+      if (f === 'active') {
+        filters.order_status = 'active';
+      } else if (f === 'matched') {
+        filters.matched = 'true';
+      } else if (f && f.startsWith('recon_')) {
+        const status = f.replace('recon_', '');
+        filters.reconciliation_status = status;
+      }
+      fetchData(1);
+    }
+
+    function clearAll() {
+      search.value = '';
+      activeFilter.value = null;
+      Object.keys(filters).forEach(k => filters[k] = '');
+      fetchData(1);
+    }
+
+    function onSearch() {
+      if (searchTimer) clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => fetchData(1), 350);
+    }
+
+    function getSortVal(row, key) {
+      if (key === '_product') return getProducts(row.dojo_order_items, row.dojo_order_description) || '';
+      return row[key];
+    }
+
+    function toggleSort(field) {
+      if (sortField.value === field) {
+        if (sortDir.value === 'asc') sortDir.value = 'desc';
+        else { sortField.value = null; sortDir.value = 'asc'; }
+      } else {
+        sortField.value = field;
+        sortDir.value = 'asc';
+      }
+      if (sortField.value) {
+        const dir = sortDir.value === 'asc' ? 1 : -1;
+        const key = sortField.value;
+        items.value.sort((a, b) => {
+          let va = getSortVal(a, key), vb = getSortVal(b, key);
+          if (key.includes('total') || key.includes('amount')) { va = parseFloat(va) || 0; vb = parseFloat(vb) || 0; }
+          if (key.includes('date')) { va = va ? new Date(va).getTime() : 0; vb = vb ? new Date(vb).getTime() : 0; }
+          if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir;
+          return String(va || '').localeCompare(String(vb || ''), 'es') * dir;
+        });
+      }
+    }
+
+    function sortIcon(field) {
+      if (sortField.value !== field) return 'bi bi-arrow-down-up';
+      return sortDir.value === 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down';
+    }
+
+    function openDetail(row) {
+      detail.value = row;
+      nextTick(() => {
+        const el = document.getElementById('detailModal');
+        if (!modalInstance) modalInstance = new bootstrap.Modal(el);
+        modalInstance.show();
+      });
+    }
+
+    function formatDate(d) {
+      if (!d) return '—';
+      return new Date(d).toLocaleDateString('es-MX', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    }
+
+    function formatDateFull(d) {
+      if (!d) return '—';
+      return new Date(d).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function formatMoney(amount, currency) {
+      const n = parseFloat(amount);
+      if (isNaN(n)) return '$0.00';
+      const c = (currency || 'USD').toUpperCase();
+      const prefix = c === 'MXN' ? 'MX$' : '$';
+      return prefix + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + c;
+    }
+
+    function getProducts(orderItems, desc) {
+      if (orderItems && orderItems.length) {
+        return orderItems.map(i => (i.product && i.product.title) || i.product_name || i.title || i.sku || 'Sin nombre').join(', ');
+      }
+      return desc || '';
+    }
+
+    function statusPill(s) {
+      return { active: 'pill-green', completed: 'pill-cyan', cancelled: 'pill-red' }[s] || 'pill-dim';
+    }
+
+    function statusLabel(s) {
+      return { active: 'Activo', completed: 'Completado', cancelled: 'Cancelado' }[s] || s || '—';
+    }
+
+    function refTypePill(r) {
+      return { subscription: 'pill-cyan', payment: 'pill-accent', hotmart: 'pill-orange', none: 'pill-dim', unknown: 'pill-dim' }[r] || 'pill-dim';
+    }
+
+    function refTypeLabel(r) {
+      return { subscription: 'Stripe Sub', payment: 'Stripe Pago', hotmart: 'Hotmart', none: 'Ninguno', unknown: 'Desconocido' }[r] || r || '—';
+    }
+
+    function reconPill(s) {
+      return { matched: 'pill-green', needs_reconciliation: 'pill-orange', needs_payment_match: 'pill-yellow', no_ref_id: 'pill-dim', no_payment_found: 'pill-red' }[s] || 'pill-dim';
+    }
+
+    function reconLabel(s) {
+      return { matched: 'Conciliado', needs_reconciliation: 'Cliente no encontrado', needs_payment_match: 'Pago pendiente', no_ref_id: 'Sin ref. de pago', no_payment_found: 'Pago no encontrado' }[s] || s || 'Sin clasificar';
+    }
+
+    onMounted(() => {
+      fetchData(1);
+      fetchAllStats();
+    });
+
+    return {
+      items, isLoading, search, detail, paging, filters, stats, categoryCounts,
+      activeFilter, activeFilterLabel, sortField, sortDir, visiblePages, unclassifiedCount,
+      fetchData, fetchAllStats, setFilter, clearAll, onSearch, getSortVal, toggleSort, sortIcon, openDetail,
+      formatDate, formatDateFull, formatMoney, getProducts, fmt,
+      statusPill, statusLabel, refTypePill, refTypeLabel, reconPill, reconLabel,
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
