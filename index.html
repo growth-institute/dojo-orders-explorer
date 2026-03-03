@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ordenes DOJO — Explorador</title>
+  <title>DOJO Conciliacion — Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #0F172A;
@@ -37,8 +37,32 @@
     .topbar { background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border-bottom: 1px solid var(--border); padding: 1rem 0; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(12px); }
     .topbar h1 { font-size: 1.125rem; font-weight: 700; letter-spacing: -0.02em; }
     .topbar h1 span { color: var(--accent); }
-    .topbar .badge-ro { font-size: 0.625rem; background: var(--accent-bg); color: var(--accent); border: 1px solid rgba(129,140,248,0.3); padding: 0.2em 0.6em; border-radius: 2rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-left: 0.75rem; vertical-align: middle; }
+    .topbar .badge-dash { font-size: 0.625rem; background: var(--green-bg); color: var(--green); border: 1px solid rgba(52,211,153,0.3); padding: 0.2em 0.6em; border-radius: 2rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-left: 0.75rem; vertical-align: middle; }
 
+    /* ===== HERO SECTION ===== */
+    .hero-section { margin: 1.5rem 0 1.25rem; }
+    .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .hero-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem 2.5rem; text-align: center; cursor: pointer; transition: all 0.25s; position: relative; overflow: hidden; }
+    .hero-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+    .hero-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+    .hero-card.active { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .hero-matched::before { background: var(--green); }
+    .hero-matched:hover, .hero-matched.active { border-color: var(--green); }
+    .hero-unmatched::before { background: var(--yellow); }
+    .hero-unmatched:hover, .hero-unmatched.active { border-color: var(--yellow); }
+    .hero-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .hero-matched .hero-icon { color: var(--green); }
+    .hero-unmatched .hero-icon { color: var(--yellow); }
+    .hero-num { font-size: 3.5rem; font-weight: 900; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+    .hero-matched .hero-num { color: var(--green); }
+    .hero-unmatched .hero-num { color: var(--yellow); }
+    .hero-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-top: 0.75rem; line-height: 1.5; }
+    .hero-footer { display: flex; justify-content: center; gap: 2rem; margin-top: 1rem; font-size: 0.8125rem; color: var(--text-muted); }
+    .hero-bar { margin-top: 0.5rem; height: 6px; background: rgba(100,116,139,0.2); border-radius: 3px; overflow: hidden; }
+    .hero-bar-fill { height: 100%; background: linear-gradient(90deg, var(--green), #059669); border-radius: 3px; transition: width 0.8s ease; }
+    .hero-skeleton { display: inline-block; background: linear-gradient(90deg, var(--border) 25%, var(--bg-card-hover) 50%, var(--border) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 0.5rem; width: 120px; height: 3.5rem; }
+
+    /* ===== STAT CARDS ===== */
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(195px, 1fr)); gap: 0.75rem; margin: 1.25rem 0; }
     .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden; }
     .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; opacity: 0; transition: opacity 0.2s; }
@@ -66,6 +90,7 @@
     .sc-needsmatch .sc-num { color: var(--cyan); }
     .sc-needsmatch::before { background: var(--cyan); }
 
+    /* ===== FILTERS ===== */
     .filters-bar { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.875rem 1.25rem; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.625rem; align-items: center; }
     .f-input { background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.8125rem; font-family: inherit; transition: border-color 0.2s; outline: none; }
     .f-input:focus { border-color: var(--accent); }
@@ -75,6 +100,7 @@
     .btn-clear { background: none; border: 1px solid var(--border); color: var(--text-muted); border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
     .btn-clear:hover { border-color: var(--red); color: var(--red); }
 
+    /* ===== TABLE ===== */
     .data-table-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
     .info-row { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border); }
     .info-row .count { font-size: 0.8125rem; color: var(--text-muted); }
@@ -101,6 +127,7 @@
     .mono { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
     .truncate { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle; }
 
+    /* ===== PAGINATION ===== */
     .pag { display: flex; justify-content: center; align-items: center; gap: 0.375rem; padding: 1rem; }
     .pag button { background: var(--bg); border: 1px solid var(--border); color: var(--text-muted); border-radius: 0.5rem; padding: 0.4rem 0.75rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.15s; font-family: inherit; }
     .pag button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
@@ -108,27 +135,49 @@
     .pag button:disabled { opacity: 0.3; cursor: default; }
     .pag .pag-info { font-size: 0.75rem; color: var(--text-dim); margin: 0 0.5rem; }
 
+    /* ===== DETAIL MODAL ===== */
     .detail-modal .modal-content { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); }
     .detail-modal .modal-header { border-bottom: 1px solid var(--border); padding: 1.25rem 1.5rem; }
     .detail-modal .modal-header .modal-title { font-weight: 700; font-size: 1rem; }
     .detail-modal .modal-header .btn-close { filter: invert(1); }
-    .detail-modal .modal-body { padding: 1.5rem; max-height: 70vh; overflow-y: auto; }
+    .detail-modal .modal-body { padding: 1.5rem; max-height: 75vh; overflow-y: auto; }
     .dl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 2rem; }
     .dl-item .dl-label { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 0.15rem; }
     .dl-item .dl-value { font-size: 0.875rem; word-break: break-all; line-height: 1.5; }
     .dl-full { grid-column: 1 / -1; }
     .json-block { background: var(--bg); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.75rem; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; max-height: 200px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; color: var(--text-muted); }
 
+    /* ===== RECONCILIATION FORM ===== */
+    .recon-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid var(--border); }
+    .recon-section h6 { font-size: 0.8125rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .recon-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .recon-grid label { display: block; font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); margin-bottom: 0.25rem; }
+    .recon-grid input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.8125rem; font-family: 'JetBrains Mono', monospace; transition: border-color 0.2s; outline: none; }
+    .recon-grid input:focus { border-color: var(--accent); }
+    .recon-grid input::placeholder { color: var(--text-dim); }
+    .recon-full { grid-column: 1 / -1; }
+    .recon-actions { margin-top: 1rem; display: flex; gap: 0.75rem; align-items: center; }
+    .btn-match { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1.5rem; border-radius: 0.5rem; font-size: 0.8125rem; font-weight: 700; cursor: pointer; transition: all 0.2s; border: none; font-family: inherit; background: var(--green); color: #0F172A; }
+    .btn-match:hover:not(:disabled) { background: #2cc98a; transform: translateY(-1px); }
+    .btn-match:disabled { opacity: 0.5; cursor: default; }
+    .recon-hint { font-size: 0.6875rem; color: var(--text-dim); margin-top: 0.5rem; }
+    .recon-msg { margin-top: 0.75rem; padding: 0.6rem 1rem; border-radius: 0.5rem; font-size: 0.8125rem; font-weight: 600; display: flex; align-items: center; gap: 0.4rem; }
+    .recon-msg-ok { background: var(--green-bg); color: var(--green); }
+    .recon-msg-err { background: var(--red-bg); color: var(--red); }
+
+    /* ===== MISC ===== */
     .skeleton { background: linear-gradient(90deg, var(--border) 25%, var(--bg-card-hover) 50%, var(--border) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 0.25rem; height: 1rem; display: inline-block; }
     @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-
     .empty-state { text-align: center; padding: 4rem 1rem; color: var(--text-dim); }
     .empty-state i { font-size: 2.5rem; margin-bottom: 0.75rem; display: block; opacity: 0.4; }
 
     @media (max-width: 768px) {
+      .hero-grid { grid-template-columns: 1fr; }
+      .hero-num { font-size: 2.5rem; }
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
       .filters-bar { flex-direction: column; }
       .dl-grid { grid-template-columns: 1fr; }
+      .recon-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -140,7 +189,7 @@
     <div class="container-fluid" style="max-width:1700px">
       <div class="d-flex justify-content-between align-items-center">
         <div>
-          <h1><span>DOJO</span> Ordenes &mdash; Explorador <span class="badge-ro">Solo Lectura</span></h1>
+          <h1><span>DOJO</span> Conciliacion <span class="badge-dash">Dashboard</span></h1>
         </div>
         <div style="text-align:right">
           <div style="font-size:0.75rem;color:var(--text-muted)">
@@ -157,7 +206,32 @@
 
   <div class="container-fluid py-3" style="max-width:1700px">
 
-    <!-- Stats Cards -->
+    <!-- HERO: Two Primary Numbers -->
+    <div class="hero-section">
+      <div class="hero-grid">
+        <div class="hero-card hero-matched" :class="{ active: activeFilter === 'matched_active' }" @click="setFilter('matched_active')">
+          <div class="hero-icon"><i class="bi bi-check-circle-fill"></i></div>
+          <div class="hero-num" v-if="heroStats.activeMatched != null">{{ heroStats.activeMatched.toLocaleString('es-MX') }}</div>
+          <div v-else class="hero-skeleton">&nbsp;</div>
+          <div class="hero-label">Ordenes Activas<br>Con Pago Matcheado</div>
+        </div>
+        <div class="hero-card hero-unmatched" :class="{ active: activeFilter === 'unmatched_active' }" @click="setFilter('unmatched_active')">
+          <div class="hero-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+          <div class="hero-num" v-if="heroStats.activeUnmatched != null">{{ heroStats.activeUnmatched.toLocaleString('es-MX') }}</div>
+          <div v-else class="hero-skeleton">&nbsp;</div>
+          <div class="hero-label">Ordenes Activas<br>Sin Pago Matcheado</div>
+        </div>
+      </div>
+      <div class="hero-footer">
+        <span>Total ordenes activas: <strong>{{ heroStats.totalActive != null ? heroStats.totalActive.toLocaleString('es-MX') : '...' }}</strong></span>
+        <span>Tasa de conciliacion: <strong>{{ matchRate }}</strong></span>
+      </div>
+      <div class="hero-bar">
+        <div class="hero-bar-fill" :style="{ width: matchRate }"></div>
+      </div>
+    </div>
+
+    <!-- Secondary Stats Cards -->
     <div class="stats-grid">
       <div class="stat-card sc-total" :class="{ active: !activeFilter }" @click="setFilter(null)">
         <div class="sc-num">{{ fmt(stats.total_records) }}</div>
@@ -168,16 +242,6 @@
         <div class="sc-num">{{ fmt(stats.total_active) }}</div>
         <div class="sc-label">Ordenes Activas</div>
         <div class="sc-desc">Con status "active" en DOJO</div>
-      </div>
-      <div class="stat-card sc-matched" :class="{ active: activeFilter === 'matched' }" @click="setFilter('matched')">
-        <div class="sc-num">{{ fmt(stats.matched) }}</div>
-        <div class="sc-label">Conciliadas</div>
-        <div class="sc-desc">Vinculadas a un cliente en nuestro sistema</div>
-      </div>
-      <div class="stat-card sc-pending" @click="setFilter(null)">
-        <div class="sc-num">{{ unclassifiedCount }}</div>
-        <div class="sc-label">Pendientes de Clasificar</div>
-        <div class="sc-desc">Aun no procesadas por el pipeline</div>
       </div>
       <div class="stat-card sc-noref" :class="{ active: activeFilter === 'recon_no_ref_id' }" @click="setFilter('recon_no_ref_id')">
         <div class="sc-num">{{ fmt(categoryCounts.no_ref_id) }}</div>
@@ -248,7 +312,10 @@
       </div>
       <div class="f-divider"></div>
       <div>
-        <input class="f-input" type="text" v-model="filters.email_domain" @change="fetchData(1)" placeholder="Dominio email..." style="width:130px">
+        <input class="f-input" type="text" v-model="filters.email_domain" @change="fetchData(1)" placeholder="Incluir dominio..." style="width:130px" title="Solo mostrar este dominio">
+      </div>
+      <div>
+        <input class="f-input" type="text" v-model="filters.exclude_domain" @change="fetchData(1)" placeholder="Excluir dominio..." style="width:140px; border-color: rgba(248,113,113,0.3)" title="Excluir ordenes con este dominio">
       </div>
       <button class="btn-clear" @click="clearAll" title="Limpiar filtros"><i class="bi bi-x-lg"></i> Limpiar</button>
     </div>
@@ -336,7 +403,9 @@
                 <span v-else style="color:var(--text-dim);font-size:0.75rem">—</span>
               </td>
               <td>
-                <button class="btn-clear" style="padding:0.3rem 0.5rem;font-size:0.7rem" @click="openDetail(row)" title="Ver todos los detalles"><i class="bi bi-eye"></i></button>
+                <button class="btn-clear" style="padding:0.3rem 0.5rem;font-size:0.7rem" @click="openDetail(row)" :title="row.matched ? 'Ver detalles' : 'Ver / Reconciliar'">
+                  <i :class="row.matched ? 'bi bi-eye' : 'bi bi-pencil-square'"></i>
+                </button>
               </td>
             </tr>
           </tbody>
@@ -360,7 +429,11 @@
     <div class="modal-dialog modal-lg modal-dialog-centered">
       <div class="modal-content" v-if="detail">
         <div class="modal-header">
-          <h5 class="modal-title">Orden DOJO #{{ detail.dojo_order_id }}</h5>
+          <h5 class="modal-title">
+            Orden DOJO #{{ detail.dojo_order_id }}
+            <span v-if="detail.matched" class="pill pill-green" style="margin-left:0.5rem"><i class="bi bi-check-circle-fill"></i> Conciliado</span>
+            <span v-else class="pill pill-yellow" style="margin-left:0.5rem"><i class="bi bi-exclamation-triangle-fill"></i> Sin Conciliar</span>
+          </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
@@ -482,6 +555,49 @@
               <div class="json-block">{{ JSON.stringify(detail.manual_conciliation, null, 2) }}</div>
             </div>
           </div>
+
+          <!-- RECONCILIATION FORM (only for unmatched orders) -->
+          <div v-if="!detail.matched" class="recon-section">
+            <h6><i class="bi bi-link-45deg"></i> Reconciliacion Manual</h6>
+
+            <div v-if="reconSuccess" class="recon-msg recon-msg-ok">
+              <i class="bi bi-check-circle-fill"></i> Orden #{{ detail.dojo_order_id }} conciliada exitosamente
+            </div>
+
+            <template v-else>
+              <div class="recon-grid">
+                <div>
+                  <label>Customer ID <span style="color:var(--text-dim);font-weight:400;text-transform:none">(UUID del cliente)</span></label>
+                  <input v-model="reconForm.customer_id" placeholder="ej: a1b2c3d4-..." type="text">
+                </div>
+                <div>
+                  <label>Payment ID <span style="color:var(--text-dim);font-weight:400;text-transform:none">(opcional)</span></label>
+                  <input v-model="reconForm.payment_id" placeholder="ej: 12345" type="number">
+                </div>
+                <div>
+                  <label>Subscription ID <span style="color:var(--text-dim);font-weight:400;text-transform:none">(opcional)</span></label>
+                  <input v-model="reconForm.subscription_id" placeholder="ej: 67890" type="number">
+                </div>
+                <div>
+                  <label>Notas <span style="color:var(--text-dim);font-weight:400;text-transform:none">(opcional)</span></label>
+                  <input v-model="reconForm.notes" placeholder="Razon de la conciliacion manual..." type="text">
+                </div>
+              </div>
+              <div class="recon-actions">
+                <button class="btn-match" @click="submitReconciliation" :disabled="reconSubmitting">
+                  <i class="bi bi-check-circle-fill"></i>
+                  {{ reconSubmitting ? 'Procesando...' : 'Marcar como Conciliado' }}
+                </button>
+              </div>
+              <div class="recon-hint">
+                Se vinculara la orden #{{ detail.dojo_order_id }} y se marcara como conciliada en el sistema.
+              </div>
+              <div v-if="reconError" class="recon-msg recon-msg-err">
+                <i class="bi bi-x-circle-fill"></i> {{ reconError }}
+              </div>
+            </template>
+          </div>
+
         </div>
       </div>
     </div>
@@ -508,13 +624,27 @@ createApp({
     let modalInstance = null;
 
     const paging = reactive({ itemsTotal: 0, pageTotal: 1, curPage: 1, nextPage: null, prevPage: null });
-    const filters = reactive({ order_status: '', matched: '', reconciliation_status: '', date_from: '', date_to: '', min_amount: '', max_amount: '', email_domain: '', exclude_domain: '' });
+    const filters = reactive({ order_status: '', matched: '', reconciliation_status: '', recon_status_not: '', date_from: '', date_to: '', min_amount: '', max_amount: '', email_domain: '', exclude_domain: '' });
     const stats = reactive({ total_records: null, total_active: null, matched: null });
     const categoryCounts = reactive({ needs_reconciliation: null, needs_payment_match: null, no_ref_id: null, no_payment_found: null });
+
+    // Hero stats: the TWO primary numbers
+    const heroStats = reactive({ activeMatched: null, activeUnmatched: null, totalActive: null });
+
+    // Reconciliation form
+    const reconForm = reactive({ customer_id: '', payment_id: '', subscription_id: '', notes: '' });
+    const reconSubmitting = ref(false);
+    const reconError = ref('');
+    const reconSuccess = ref(false);
 
     function fmt(val) {
       return val != null ? val.toLocaleString('es-MX') : '—';
     }
+
+    const matchRate = computed(() => {
+      if (!heroStats.totalActive || heroStats.activeMatched == null) return '0%';
+      return ((heroStats.activeMatched / heroStats.totalActive) * 100).toFixed(1) + '%';
+    });
 
     const unclassifiedCount = computed(() => {
       const t = stats.total_records;
@@ -541,6 +671,8 @@ createApp({
       const labels = {
         active: 'Ordenes Activas',
         matched: 'Conciliadas',
+        matched_active: 'Con Pago Matcheado (Activas)',
+        unmatched_active: 'Sin Pago Matcheado (Activas)',
         recon_no_ref_id: 'Sin Referencia de Pago',
         recon_needs_reconciliation: 'Cliente No Encontrado',
         recon_no_payment_found: 'Pago No Encontrado',
@@ -558,6 +690,7 @@ createApp({
         if (filters.order_status) params.set('order_status', filters.order_status);
         if (filters.matched) params.set('matched', filters.matched);
         if (filters.reconciliation_status) params.set('reconciliation_status', filters.reconciliation_status);
+        if (filters.recon_status_not) params.set('recon_status_not', filters.recon_status_not);
         if (filters.date_from) params.set('date_from', filters.date_from);
         if (filters.date_to) params.set('date_to', filters.date_to);
         if (filters.min_amount) params.set('min_amount', filters.min_amount);
@@ -603,10 +736,10 @@ createApp({
 
     async function fetchAllStats() {
       try {
-        const [total, active, matched, needsRecon, needsPayment, noRefId, noPayFound] = await Promise.all([
+        const [total, active, activeMatched, needsRecon, needsPayment, noRefId, noPayFound] = await Promise.all([
           fetchCount({}),
           fetchCount({ order_status: 'active' }),
-          fetchCount({ matched: 'true' }),
+          fetchCount({ matched: 'true', order_status: 'active' }),
           fetchCount({ reconciliation_status: 'needs_reconciliation' }),
           fetchCount({ reconciliation_status: 'needs_payment_match' }),
           fetchCount({ reconciliation_status: 'no_ref_id' }),
@@ -614,7 +747,13 @@ createApp({
         ]);
         stats.total_records = total;
         stats.total_active = active;
-        stats.matched = matched;
+        stats.matched = activeMatched;
+
+        // Hero numbers: 100% from DB, no estimation
+        heroStats.activeMatched = activeMatched;
+        heroStats.totalActive = active;
+        heroStats.activeUnmatched = active - activeMatched;
+
         categoryCounts.needs_reconciliation = needsRecon;
         categoryCounts.needs_payment_match = needsPayment;
         categoryCounts.no_ref_id = noRefId;
@@ -624,21 +763,19 @@ createApp({
 
     function setFilter(f) {
       activeFilter.value = f;
-      filters.order_status = '';
-      filters.matched = '';
-      filters.reconciliation_status = '';
-      filters.exclude_domain = '';
-      filters.date_from = '';
-      filters.date_to = '';
-      filters.min_amount = '';
-      filters.max_amount = '';
-      filters.email_domain = '';
+      // Reset all filters
+      Object.keys(filters).forEach(k => filters[k] = '');
       search.value = '';
 
       if (f === 'active') {
         filters.order_status = 'active';
       } else if (f === 'matched') {
         filters.matched = 'true';
+      } else if (f === 'matched_active') {
+        filters.matched = 'true';
+        filters.order_status = 'active';
+      } else if (f === 'unmatched_active') {
+        filters.order_status = 'active';
       } else if (f && f.startsWith('recon_')) {
         const status = f.replace('recon_', '');
         filters.reconciliation_status = status;
@@ -689,13 +826,81 @@ createApp({
       return sortDir.value === 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down';
     }
 
+    function resetReconForm() {
+      reconForm.customer_id = '';
+      reconForm.payment_id = '';
+      reconForm.subscription_id = '';
+      reconForm.notes = '';
+      reconError.value = '';
+      reconSuccess.value = false;
+      reconSubmitting.value = false;
+    }
+
     function openDetail(row) {
       detail.value = row;
+      resetReconForm();
+      // Prefill IDs if already linked
+      if (row.customer_id) reconForm.customer_id = String(row.customer_id);
+      if (row.payment_id) reconForm.payment_id = String(row.payment_id);
+      if (row.subscription_id) reconForm.subscription_id = String(row.subscription_id);
       nextTick(() => {
         const el = document.getElementById('detailModal');
         if (!modalInstance) modalInstance = new bootstrap.Modal(el);
         modalInstance.show();
       });
+    }
+
+    async function submitReconciliation() {
+      if (reconSubmitting.value) return;
+      reconSubmitting.value = true;
+      reconError.value = '';
+      reconSuccess.value = false;
+
+      try {
+        const update = {
+          id: detail.value.id,
+          matched: true,
+          reconciliation_status: 'matched',
+          customer_id: reconForm.customer_id.trim() || null,
+          payment_id: reconForm.payment_id ? parseInt(reconForm.payment_id) : null,
+          subscription_id: reconForm.subscription_id ? parseInt(reconForm.subscription_id) : null,
+        };
+
+        const resp = await fetch(API_BASE + '/dojo/bulk-update-matches', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ updates: [update] }),
+        });
+
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const result = await resp.json();
+
+        if (result.errors_count > 0) {
+          throw new Error(result.errors?.[0]?.error || 'Error desconocido al actualizar');
+        }
+
+        reconSuccess.value = true;
+
+        // Update detail and table row locally
+        detail.value.matched = true;
+        detail.value.reconciliation_status = 'matched';
+        if (reconForm.customer_id) detail.value.customer_id = reconForm.customer_id;
+        if (reconForm.payment_id) detail.value.payment_id = parseInt(reconForm.payment_id);
+        if (reconForm.subscription_id) detail.value.subscription_id = parseInt(reconForm.subscription_id);
+
+        const idx = items.value.findIndex(r => r.id === detail.value.id);
+        if (idx >= 0) {
+          items.value[idx].matched = true;
+          items.value[idx].reconciliation_status = 'matched';
+        }
+
+        // Refresh stats
+        fetchAllStats();
+      } catch (err) {
+        reconError.value = err.message;
+      } finally {
+        reconSubmitting.value = false;
+      }
     }
 
     function formatDate(d) {
@@ -754,8 +959,10 @@ createApp({
 
     return {
       items, isLoading, search, detail, paging, filters, stats, categoryCounts,
+      heroStats, matchRate, reconForm, reconSubmitting, reconError, reconSuccess,
       activeFilter, activeFilterLabel, sortField, sortDir, visiblePages, unclassifiedCount,
-      fetchData, fetchAllStats, setFilter, clearAll, onSearch, getSortVal, toggleSort, sortIcon, openDetail,
+      fetchData, fetchAllStats, setFilter, clearAll, onSearch, getSortVal, toggleSort, sortIcon,
+      openDetail, submitReconciliation, resetReconForm,
       formatDate, formatDateFull, formatMoney, getProducts, fmt,
       statusPill, statusLabel, refTypePill, refTypeLabel, reconPill, reconLabel,
     };
