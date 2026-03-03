@@ -284,6 +284,7 @@
         <select class="f-input f-select" v-model="filters.matched" @change="fetchData(1)">
           <option value="">Conciliacion: Todos</option>
           <option value="true">Solo Conciliados</option>
+          <option value="false">No Conciliados</option>
         </select>
       </div>
       <div>
@@ -315,7 +316,7 @@
         <input class="f-input" type="text" v-model="filters.email_domain" @change="fetchData(1)" placeholder="Incluir dominio..." style="width:130px" title="Solo mostrar este dominio">
       </div>
       <div>
-        <input class="f-input" type="text" v-model="filters.exclude_domain" @change="fetchData(1)" placeholder="Excluir dominio..." style="width:140px; border-color: rgba(248,113,113,0.3)" title="Excluir ordenes con este dominio">
+        <input class="f-input" type="text" v-model="filters.exclude_domain" @change="fetchData(1)" placeholder="Excluir: dom1,dom2..." style="width:170px; border-color: rgba(248,113,113,0.3)" title="Excluir dominios separados por coma">
       </div>
       <button class="btn-clear" @click="clearAll" title="Limpiar filtros"><i class="bi bi-x-lg"></i> Limpiar</button>
     </div>
@@ -688,27 +689,40 @@ createApp({
         const s = search.value.trim();
         if (s) params.set('search', s);
         if (filters.order_status) params.set('order_status', filters.order_status);
-        if (filters.matched) params.set('matched', filters.matched);
+        // matched=false doesn't work with API (==? treats false as falsy), use recon_status_not instead
+        if (filters.matched === 'true') params.set('matched', 'true');
+        else if (filters.matched === 'false') params.set('recon_status_not', 'matched');
         if (filters.reconciliation_status) params.set('reconciliation_status', filters.reconciliation_status);
-        if (filters.recon_status_not) params.set('recon_status_not', filters.recon_status_not);
+        if (filters.recon_status_not && filters.matched !== 'false') params.set('recon_status_not', filters.recon_status_not);
         if (filters.date_from) params.set('date_from', filters.date_from);
         if (filters.date_to) params.set('date_to', filters.date_to);
         if (filters.min_amount) params.set('min_amount', filters.min_amount);
         if (filters.max_amount) params.set('max_amount', filters.max_amount);
         if (filters.email_domain) params.set('email_domain', filters.email_domain);
-        if (filters.exclude_domain) params.set('exclude_domain', filters.exclude_domain);
+        // Multi-domain exclude: send first to API, filter rest client-side
+        const excludeDomains = filters.exclude_domain ? filters.exclude_domain.split(',').map(d => d.trim().toLowerCase()).filter(Boolean) : [];
+        if (excludeDomains.length > 0) params.set('exclude_domain', excludeDomains[0]);
         const resp = await fetch(API_BASE + '/dojo/unmatched-payments?' + params.toString());
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
         const data = await resp.json();
+        // Client-side filter for additional excluded domains (2nd, 3rd, etc.)
+        const extraExclude = excludeDomains.slice(1);
+        function applyExtraDomainFilter(rows) {
+          if (extraExclude.length === 0) return rows;
+          return rows.filter(r => {
+            const email = (r.dojo_user_email || '').toLowerCase();
+            return !extraExclude.some(d => email.includes(d));
+          });
+        }
         if (Array.isArray(data)) {
-          items.value = data;
-          paging.itemsTotal = data.length;
+          items.value = applyExtraDomainFilter(data);
+          paging.itemsTotal = items.value.length;
           paging.pageTotal = 1;
           paging.curPage = 1;
           paging.nextPage = null;
           paging.prevPage = null;
         } else {
-          items.value = data.items || [];
+          items.value = applyExtraDomainFilter(data.items || []);
           paging.itemsTotal = data.itemsTotal ?? 0;
           paging.pageTotal = data.pageTotal ?? 1;
           paging.curPage = data.curPage ?? page;
